@@ -59,200 +59,223 @@ const speciesSchema = z.object({
 
 
 
-export default function SpeciesDetailsDialogue({ species }: { species: Species }) {
-    
-    const [isEditing, setIsEditing] = useState(false);
+export default function SpeciesDetailsDialogue({ species, currentUser }: { species: Species; currentUser: String }) {
+  const router = useRouter(); // Want next/navigation not next/router
+  const [isEditing, setIsEditing] = useState(false);
 
-    // Default values for the form fields.
-    const defaultValues: Partial<FormData> = {
-        scientific_name: species.scientific_name,
-        common_name: species.common_name,
-        kingdom: species.kingdom,
-        total_population: species.total_population,
-        image: species.image,
-        description: species.description,
-    };
+  // Default values for the form fields.
+  const defaultValues: Partial<FormData> = {
+    scientific_name: species.scientific_name,
+    common_name: species.common_name,
+    kingdom: species.kingdom,
+    total_population: species.total_population,
+    image: species.image,
+    description: species.description,
+  };
 
-    // Instantiate form functionality with React Hook Form, passing in the Zod schema (for validation) and default values
-    const form = useForm<FormData>({
-        resolver: zodResolver(speciesSchema),
-        defaultValues,
-        mode: "onChange",
-    });
+  // Instantiate form functionality with React Hook Form, passing in the Zod schema (for validation) and default values
+  const form = useForm<FormData>({
+    resolver: zodResolver(speciesSchema),
+    defaultValues,
+    mode: "onChange",
+  });
 
-    const onSubmit = (input: FormData) => {
-        console.log(input); // TODO: change this in the future
-    };
+  const onSubmit = async (input: FormData) => {
+    const supabase = createBrowserSupabaseClient();
+    const { error } = await supabase.from("species").update(input).eq("id", species.id);
 
-    const startEditing = (e: MouseEvent) => {
-        e.preventDefault();
-        setIsEditing(true);
-    };
-
-    const handleCancel = (e: MouseEvent) => {
-        e.preventDefault();
-        if (!window.confirm("Revert all unsaved changes?")){
-            return;
-        };
-
-        form.reset(defaultValues);
-        setIsEditing(false);
+    // Catch and report errors from Supabase and exit the onSubmit function with an early 'return' if an error occurred.
+    if (error) {
+      return toast({
+        title: "Something went wrong.",
+        description: error.message,
+        variant: "destructive",
+      });
     }
 
-    return(
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button className="mt-3 w-full">Learn More</Button>
-            </DialogTrigger>
-            <DialogContent className="max-h-screen overflow-y-auto sm:max-w-[600px]">
-                <DialogHeader>
-                <DialogTitle><h3 className="mt-3 text-2xl font-semibold">{species.scientific_name}</h3></DialogTitle>
-                {species.common_name && <DialogDescription>
-                    <h4 className="text-lg font-light italic">{species.common_name}</h4>
-                    <h4 className="text-lg font-light">Part of Kindom {species.kingdom}</h4>
-                    <h4 className="text-lg font-light">Total Population: {species.total_population ? numberWithCommas(species.total_population): "Unknown"}</h4>
-                    <h4 className="text-lg font-light">(REMOVE) Author is: {species.author ? species.author: "Unknown"}</h4>
-                    <p>{species.description ? species.description: ""}</p>
-                </DialogDescription>}
-                </DialogHeader>
-                <Form {...form}>
-          <form onSubmit={(e: BaseSyntheticEvent) => void form.handleSubmit(onSubmit)(e)}>
-            <div className="grid w-full items-center gap-4">
-              <FormField
-                control={form.control}
-                name="scientific_name"
-                render={({ field }) => (
+    setIsEditing(false); // Switch out of editing mode
+
+    form.reset(input);
+
+    router.refresh();
+
+    return toast({
+      title: "Species updated successfully!",
+      description: "Saved your changes to " + input.scientific_name,
+    });
+  };
+
+  const startEditing = (e: MouseEvent) => {
+      e.preventDefault();
+      setIsEditing(true);
+  };
+
+  const handleCancel = (e: MouseEvent) => {
+      e.preventDefault();
+      if (!window.confirm("Revert all unsaved changes?")){
+          return;
+      };
+
+      form.reset(defaultValues);
+      setIsEditing(false);
+  }
+
+  return(
+      <Dialog>
+          <DialogTrigger asChild>
+              <Button className="mt-3 w-full">Learn More</Button>
+          </DialogTrigger>
+          <DialogContent className="max-h-screen overflow-y-auto sm:max-w-[600px]">
+              <DialogHeader>
+              {/* TODO: determine what info<DialogTitle><h3 className="mt-3 text-2xl font-semibold">{species.scientific_name}</h3></DialogTitle>
+              {species.common_name && <DialogDescription>
+                  <h4 className="text-lg font-light italic">{species.common_name}</h4>
+                  <h4 className="text-lg font-light">Part of Kindom {species.kingdom}</h4>
+                  <h4 className="text-lg font-light">Total Population: {species.total_population ? numberWithCommas(species.total_population): "Unknown"}</h4>
+                  <h4 className="text-lg font-light">(REMOVE) Author is: {species.author ? species.author: "Unknown"} and current user is {currentUser}</h4>
+                  <p>{species.description ? species.description: ""}</p>
+              </DialogDescription>} */}
+              <DialogTitle>Species Information</DialogTitle>
+              <DialogDescription></DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+        <form onSubmit={(e: BaseSyntheticEvent) => void form.handleSubmit(onSubmit)(e)}>
+          <div className="grid w-full items-center gap-4">
+            <FormField
+              control={form.control}
+              name="scientific_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Scientific Name</FormLabel>
+                  <FormControl>
+                    <Input readOnly={!isEditing} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="common_name"
+              render={({ field }) => {
+                // We must extract value from field and convert a potential defaultValue of `null` to "" because inputs can't handle null values: https://github.com/orgs/react-hook-form/discussions/4091
+                const { value, ...rest } = field;
+                return (
                   <FormItem>
-                    <FormLabel>Scientific Name</FormLabel>
+                    <FormLabel>Common Name</FormLabel>
                     <FormControl>
-                      <Input readOnly={!isEditing} {...field} />
+                      <Input readOnly={!isEditing} value={value ?? ""} {...rest} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="common_name"
-                render={({ field }) => {
-                  // We must extract value from field and convert a potential defaultValue of `null` to "" because inputs can't handle null values: https://github.com/orgs/react-hook-form/discussions/4091
-                  const { value, ...rest } = field;
-                  return (
-                    <FormItem>
-                      <FormLabel>Common Name</FormLabel>
-                      <FormControl>
-                        <Input readOnly={!isEditing} value={value ?? ""} {...rest} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <FormField
-                control={form.control}
-                name="kingdom"
-                render={({ field }) => (
+                );
+              }}
+            />
+            <FormField
+              control={form.control}
+              name="kingdom"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Kingdom</FormLabel>
+                  <Select disabled={!isEditing} onValueChange={(value) => field.onChange(kingdoms.parse(value))} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectGroup>
+                        {kingdoms.options.map((kingdom, index) => (
+                          <SelectItem key={index} value={kingdom}>
+                            {kingdom}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="total_population"
+              render={({ field }) => {
+                const { value, ...rest } = field;
+                return (
                   <FormItem>
-                    <FormLabel>Kingdom</FormLabel>
-                    <Select disabled={!isEditing} onValueChange={(value) => field.onChange(kingdoms.parse(value))} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectGroup>
-                          {kingdoms.options.map((kingdom, index) => (
-                            <SelectItem key={index} value={kingdom}>
-                              {kingdom}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Total population</FormLabel>
+                    <FormControl>
+                      {/* Using shadcn/ui form with number: https://github.com/shadcn-ui/ui/issues/421 */}
+                      <Input
+                        readOnly={!isEditing}
+                        type="number"
+                        value={value ?? ""}
+                        {...rest}
+                        onChange={(event) => field.onChange(+event.target.value)}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
+                );
+              }}
+            />
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => {
+                // We must extract value from field and convert a potential defaultValue of `null` to "" because inputs can't handle null values: https://github.com/orgs/react-hook-form/discussions/4091
+                const { value, ...rest } = field;
+                return (
+                  <FormItem>
+                    <FormLabel>Image URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        readOnly={!isEditing}
+                        value={value ?? ""}
+                        {...rest}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => {
+                // We must extract value from field and convert a potential defaultValue of `null` to "" because textareas can't handle null values: https://github.com/orgs/react-hook-form/discussions/4091
+                const { value, ...rest } = field;
+                return (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        readOnly={!isEditing}
+                        value={value ?? ""}
+                        {...rest}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+            {species.author === currentUser && <div className="flex">
+              {isEditing ? (
+                <>
+                  <Button type="submit" className="ml-1 mr-1 flex-auto">Confirm</Button>
+                  <Button onClick={handleCancel} type="button" className="ml-1 mr-1 flex-auto" variant="secondary">Cancel</Button>
+                </>
+                ) : (
+                    <Button onClick={startEditing} type="button" className="ml-1 mr-1 flex-auto">Edit Species</Button>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="total_population"
-                render={({ field }) => {
-                  const { value, ...rest } = field;
-                  return (
-                    <FormItem>
-                      <FormLabel>Total population</FormLabel>
-                      <FormControl>
-                        {/* Using shadcn/ui form with number: https://github.com/shadcn-ui/ui/issues/421 */}
-                        <Input
-                          readOnly={!isEditing}
-                          type="number"
-                          value={value ?? ""}
-                          {...rest}
-                          onChange={(event) => field.onChange(+event.target.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <FormField
-                control={form.control}
-                name="image"
-                render={({ field }) => {
-                  // We must extract value from field and convert a potential defaultValue of `null` to "" because inputs can't handle null values: https://github.com/orgs/react-hook-form/discussions/4091
-                  const { value, ...rest } = field;
-                  return (
-                    <FormItem>
-                      <FormLabel>Image URL</FormLabel>
-                      <FormControl>
-                        <Input
-                          readOnly={!isEditing}
-                          value={value ?? ""}
-                          {...rest}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => {
-                  // We must extract value from field and convert a potential defaultValue of `null` to "" because textareas can't handle null values: https://github.com/orgs/react-hook-form/discussions/4091
-                  const { value, ...rest } = field;
-                  return (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          readOnly={!isEditing}
-                          value={value ?? ""}
-                          {...rest}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <div className="flex">
-                {isEditing ? (
-                    <>
-                        <Button type="submit" className="ml-1 mr-1 flex-auto">Confirm</Button>
-                        <Button onClick={handleCancel} type="button" className="ml-1 mr-1 flex-auto" variant="secondary">Cancel</Button>
-                    </>
-                    ) : (
-                        <Button onClick={startEditing} type="button" className="ml-1 mr-1 flex-auto">Edit Species</Button>
-                    )}
-              </div>
-            </div>
-          </form>
-        </Form>
-            </DialogContent>
-        </Dialog>
-    );
+            </div>}
+          </div>
+        </form>
+      </Form>
+          </DialogContent>
+      </Dialog>
+  );
 }
