@@ -1,6 +1,5 @@
 
 import { Button } from "@/components/ui/button";
-import { numberWithCommas } from "./formatting";
 import {
     Dialog, DialogContent,
     DialogDescription,
@@ -8,7 +7,6 @@ import {
     DialogTitle,
     DialogTrigger
 } from "@/components/ui/dialog";
-import { Icons } from "@/components/icons";
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -152,14 +150,6 @@ export default function SpeciesDetailsDialogue({ species, currentUser }: { speci
           </DialogTrigger>
           <DialogContent className="max-h-screen overflow-y-auto sm:max-w-[600px]">
               <DialogHeader>
-              {/* TODO: determine what info<DialogTitle><h3 className="mt-3 text-2xl font-semibold">{species.scientific_name}</h3></DialogTitle>
-              {species.common_name && <DialogDescription>
-                  <h4 className="text-lg font-light italic">{species.common_name}</h4>
-                  <h4 className="text-lg font-light">Part of Kindom {species.kingdom}</h4>
-                  <h4 className="text-lg font-light">Total Population: {species.total_population ? numberWithCommas(species.total_population): "Unknown"}</h4>
-                  <h4 className="text-lg font-light">(REMOVE) Author is: {species.author ? species.author: "Unknown"} and current user is {currentUser}</h4>
-                  <p>{species.description ? species.description: ""}</p>
-              </DialogDescription>} */}
               <DialogTitle>Species Information</DialogTitle>
               <DialogDescription></DialogDescription>
               </DialogHeader>

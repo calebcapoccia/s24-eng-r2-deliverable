@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import type { Database } from "@/lib/schema";
 import UserDetailsDialogue from "./user-details-dialogue";
 type User = Database["public"]["Tables"]["profiles"]["Row"];
