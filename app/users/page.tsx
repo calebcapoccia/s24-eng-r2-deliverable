@@ -15,9 +15,6 @@ export default async function UserList() {
     // this is a protected route - only users who are signed in can view this route
     redirect("/");
   }
-
-  // Obtain the ID of the currently signed-in user
-  const sessionId = session.user.id;
   
   const { data: users } = await supabase.from("profiles").select("*").order("id", { ascending: false });
 
@@ -28,7 +25,7 @@ export default async function UserList() {
       </div>
       <Separator className="my-4" />
       <div className="flex flex-wrap justify-center">
-        {users?.map((users) => <UserCard key={users.id} user={users} currentUser={sessionId} />)}
+        {users?.map((users) => <UserCard key={users.id} user={users} />)}
       </div>
     </>
   );

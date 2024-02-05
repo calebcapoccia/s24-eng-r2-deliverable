@@ -7,23 +7,12 @@ import {
     DialogTitle,
     DialogTrigger
 } from "@/components/ui/dialog";
-import { Icons } from "@/components/icons";
-
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { createBrowserSupabaseClient } from "@/lib/client-utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { MouseEvent, useState, type BaseSyntheticEvent } from "react";
 
 import type { Database } from "@/lib/schema";
-import { userInfo } from "os";
 
 type User = Database["public"]["Tables"]["profiles"]["Row"];
 
-export default function UserDetailsDialogue({ user, currentUser }: { user: User; currentUser: String }) {
-  const router = useRouter(); // Want next/navigation not next/router
+export default function UserDetailsDialogue({ user }: { user: User }) {
 
   return(
       <Dialog>
