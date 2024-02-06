@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +17,7 @@ import { toast } from "@/components/ui/use-toast";
 import { createBrowserSupabaseClient } from "@/lib/client-utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { MouseEvent, useState, type BaseSyntheticEvent } from "react";
+import { useState, type BaseSyntheticEvent, type MouseEvent } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -288,7 +289,9 @@ export default function SpeciesDetailsDialogue({ species, currentUser }: { speci
                         Edit Species
                       </Button>
                       <Button
-                        onClick={handleDelete}
+                        onClick={(e) => {
+                          void handleDelete(e);
+                        }}
                         type="button"
                         className="ml-1 mr-1 flex-auto"
                         variant="destructive"
